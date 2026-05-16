@@ -258,7 +258,7 @@ export function Dashboard() {
                 </button>
               </div>
               {missingKey && (
-                <p className="mt-3 text-xs text-amber-300 flex items-center gap-1.5">
+                <p className="mt-3 text-xs text-amber-600 dark:text-amber-300 flex items-center gap-1.5">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   Add your{" "}
                   {provider === "anthropic" ? "Anthropic" : "Gemini"} key in{" "}
@@ -315,7 +315,7 @@ export function Dashboard() {
                     className="fixed inset-0 z-30"
                     onClick={() => setExportMenuOpen(false)}
                   />
-                  <div className="absolute right-0 top-full mt-2 z-40 w-60 rounded-xl border border-white/10 bg-[#0b0b10] p-1 shadow-xl">
+                  <div className="absolute right-0 top-full mt-2 z-40 w-60 rounded-xl border border-border bg-background p-1 shadow-xl">
                     {BULK_EXPORTS.map((o) => (
                       <button
                         key={o.value}
@@ -373,7 +373,7 @@ export function Dashboard() {
 
 function ErrorRow({ message }: { message: string }) {
   return (
-    <div className="mt-3 flex items-start gap-2 text-sm text-red-300">
+    <div className="mt-3 flex items-start gap-2 text-sm text-red-600 dark:text-red-300">
       <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
       <p>{message}</p>
     </div>
