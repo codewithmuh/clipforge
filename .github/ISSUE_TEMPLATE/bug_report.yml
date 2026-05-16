@@ -1,0 +1,102 @@
+name: Bug report
+description: Something broken? Tell us so we can fix it.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill in the sections below — the more detail, the faster we can help.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: "When I paste a YouTube Short URL, the transcript request 500s."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Walk us through it.
+      value: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Paste URL '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "Transcript should load and clips should generate."
+    validations:
+      required: true
+
+  - type: input
+    id: youtube-url
+    attributes:
+      label: YouTube URL (if relevant)
+      description: Helps reproduce transcript / metadata issues. Omit if private.
+      placeholder: "https://www.youtube.com/watch?v=..."
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: AI provider in use
+      options:
+        - Anthropic (Claude)
+        - Google (Gemini)
+        - OpenAI
+        - Vercel AI Gateway
+        - Not applicable
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: ClipForge version / commit
+      placeholder: "v0.1.0 or commit sha"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Local dev (npm run dev)
+        - Production build (npm run start)
+        - Vercel deployment
+        - Other self-host
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser & OS
+      placeholder: "Chrome 130 / macOS 15"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Paste relevant console output, server logs, or screenshots. Remove any API keys first.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I searched existing issues and didn't find a duplicate.
+          required: true
+        - label: I removed any API keys or personal data from the logs/screenshots above.
+          required: true
