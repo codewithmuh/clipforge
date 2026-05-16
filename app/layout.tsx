@@ -16,12 +16,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ClipForge — Turn YouTube videos into viral shorts in seconds",
   description:
-    "Paste a YouTube URL, get 5 viral short-form clips with hooks, captions, and CapCut / Premiere exports. BYOK Claude or Gemini. The open-source OpusClip alternative.",
+    "Paste a YouTube URL. AI ranks the most viral moments /10 and renders real 9:16 MP4s for Shorts, TikTok and Reels. Open-source, free, BYOK.",
   metadataBase: new URL("https://clipforge.app"),
   openGraph: {
-    title: "ClipForge — AI YouTube Shorts editor",
+    title: "ClipForge — open-source AI video clipper",
     description:
-      "Paste a YouTube URL → get 5 viral short-form clips ready for CapCut and Premiere.",
+      "Paste a YouTube URL → AI ranks the moments → real 9:16 MP4s ready to post.",
     type: "website",
   },
 };

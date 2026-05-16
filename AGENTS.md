@@ -19,7 +19,7 @@ Users paste a YouTube URL. The app:
 4. Creates editable clip timestamps
 5. Exports JSON for CapCut / Premiere Pro workflows
 
-The product should feel premium, ultra-fast, minimal, creator-first, and extremely easy to use. Think Linear-level polish, OpusClip simplicity, Vercel aesthetics, Framer smoothness.
+The product should feel premium, ultra-fast, minimal, creator-first, and extremely easy to use. Think Linear-level polish, Vercel aesthetics, Framer smoothness.
 
 ---
 
@@ -81,7 +81,7 @@ OPENAI_API_KEY=
 
 # UI/UX
 
-Dark-mode first. Cinematic, modern, smooth, premium SaaS. References: Vercel, Linear, Arc, OpusClip, Framer. Glassmorphism accents, large type, strong spacing, mobile responsive.
+Dark-mode first. Cinematic, modern, smooth, premium SaaS. References: Vercel, Linear, Arc, Framer. Glassmorphism accents, large type, strong spacing, mobile responsive.
 
 Landing tagline: **"Turn YouTube videos into viral shorts in seconds."**
 
@@ -105,7 +105,7 @@ Optimize for retention, curiosity gaps, emotional spikes, storytelling pacing, c
 
 - Free with BYOK.
 - Later: hosted AI credits, team workspaces, export packs, advanced editing, viral analytics.
-- Positioning: **"The open-source OpusClip alternative."**
+- Positioning: **"The open-source AI video clipper."**
 
 ---
 

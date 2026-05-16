@@ -43,10 +43,11 @@ export async function backendFetch<T>(
       cache: "no-store",
     });
   } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
     throw new BackendError(
       502,
-      "Could not reach the ClipForge backend.",
-      err instanceof Error ? err.message : String(err),
+      `ClipForge backend at ${BACKEND_URL} isn't responding. It may still be starting up — try again in a moment, or check it's running.`,
+      detail,
     );
   }
 

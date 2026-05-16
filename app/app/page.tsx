@@ -1,23 +1,13 @@
-import { Suspense } from "react";
-import { Loader2 } from "lucide-react";
-import { Dashboard } from "@/components/dashboard";
-import { SiteNav } from "@/components/site-nav";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default function AppPage() {
-  return (
-    <div className="flex min-h-screen flex-col">
-      <SiteNav />
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center py-32">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        }
-      >
-        <Dashboard />
-      </Suspense>
-    </div>
-  );
+export default async function AppPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const v = typeof params.v === "string" ? params.v : undefined;
+  redirect(v ? `/?v=${encodeURIComponent(v)}` : "/");
 }

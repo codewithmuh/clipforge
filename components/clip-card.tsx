@@ -1,17 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Copy,
-  Check,
-  Download,
-  Play,
-  Sparkle,
-  Flame,
-} from "lucide-react";
+import { Download, Play, Flame, Smartphone, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn, formatTimestamp } from "@/lib/utils";
 import type { ViralClip } from "@/lib/types";
 import type { VideoMetadata } from "@/lib/youtube-shared";
@@ -27,41 +19,41 @@ const EXPORT_OPTIONS: { label: string; value: ExportFormat }[] = [
   { label: "JSON", value: "json" },
 ];
 
-const TRIGGER_LABEL: Record<ViralClip["emotionalTrigger"], string> = {
-  curiosity: "Curiosity",
-  controversy: "Controversy",
-  emotional_payoff: "Emotional payoff",
-  fast_value: "Fast value",
-  storytelling_spike: "Storytelling spike",
-  humor: "Humor",
-  shock: "Shock",
-  insight: "Insight",
-};
+interface RenderedSource {
+  url: string;
+  layout: "vertical" | "widescreen";
+  width: number;
+  height: number;
+}
 
 export function ClipCard({
   clip,
   index,
   metadata,
   onExport,
+  rendered,
 }: {
   clip: ViralClip;
   index: number;
   metadata: VideoMetadata;
   onExport?: (format: ExportFormat, clipIndex: number) => void;
+  rendered?: RenderedSource;
 }) {
-  const [copied, setCopied] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [vertical, setVertical] = useState(true);
 
-  const duration = Math.max(0, clip.endSec - clip.startSec);
-  const watchUrl = `https://www.youtube.com/watch?v=${metadata.id}&t=${Math.floor(
-    clip.startSec,
-  )}s`;
+  const hasMp4 = Boolean(rendered);
+  const showVertical = hasMp4 ? rendered!.layout === "vertical" : vertical;
 
-  function copyHook() {
-    navigator.clipboard.writeText(clip.hook);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
+  const start = Math.max(0, Math.floor(clip.startSec));
+  const end = Math.max(start + 1, Math.ceil(clip.endSec));
+  const duration = end - start;
+  const watchUrl = `https://www.youtube.com/watch?v=${metadata.id}&t=${start}s`;
+  const embedSrc =
+    `https://www.youtube.com/embed/${metadata.id}` +
+    `?start=${start}&end=${end}&autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+  const thumbnail = `https://i.ytimg.com/vi/${metadata.id}/maxresdefault.jpg`;
 
   function handleExport(format: ExportFormat) {
     const payload = exportClips(metadata, [clip], format);
@@ -79,91 +71,147 @@ export function ClipCard({
   }
 
   const scoreColor =
-    clip.viralityScore >= 80
+    clip.viralityScore >= 8.5
       ? "text-[color:var(--color-primary)]"
-      : clip.viralityScore >= 60
-        ? "text-amber-300"
+      : clip.viralityScore >= 7
+        ? "text-amber-500 dark:text-amber-300"
         : "text-foreground/80";
 
   return (
-    <Card className="p-5 sm:p-6 transition-all hover:bg-foreground/[0.05] animate-fade-up">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-md bg-foreground/5 grid place-items-center text-xs font-mono">
+    <Card className="overflow-hidden transition-all hover:bg-foreground/[0.04] animate-fade-up flex flex-col p-0">
+      <div
+        className={cn(
+          "relative w-full bg-black overflow-hidden",
+          showVertical ? "aspect-[9/16]" : "aspect-video",
+        )}
+      >
+        {hasMp4 ? (
+          <video
+            src={rendered!.url}
+            controls
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 h-full w-full object-contain"
+          />
+        ) : playing ? (
+          <iframe
+            src={embedSrc}
+            title={clip.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className={cn(
+              "absolute inset-0 h-full w-full border-0",
+              showVertical && "scale-[2.3] origin-center",
+            )}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setPlaying(true)}
+            className="group absolute inset-0 grid place-items-center"
+            aria-label={`Play clip ${index + 1}`}
+          >
+            <img
+              src={thumbnail}
+              alt=""
+              className={cn(
+                "absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105",
+                showVertical && "scale-[1.6]",
+              )}
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.src = `https://i.ytimg.com/vi/${metadata.id}/hqdefault.jpg`;
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/40" />
+            <div className="relative grid h-14 w-14 place-items-center rounded-full bg-white/95 text-black shadow-2xl transition-transform group-hover:scale-110">
+              <Play className="h-6 w-6 fill-current translate-x-[1px]" />
+            </div>
+          </button>
+        )}
+
+        {/* Rank badge — big, prominent */}
+        <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5">
+          <span className="rounded-full bg-black/70 backdrop-blur-md px-3 py-1 text-sm font-bold text-white tabular-nums">
             #{index + 1}
-          </div>
-          <Badge variant="default" className="font-mono text-[10px]">
-            {formatTimestamp(clip.startSec)} → {formatTimestamp(clip.endSec)}
-          </Badge>
-          <Badge variant="default" className="font-mono text-[10px]">
-            {duration}s
-          </Badge>
+          </span>
+          <span className="flex items-center gap-1 rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-sm font-bold text-white">
+            <Flame className={cn("h-3.5 w-3.5", scoreColor)} />
+            <span className="tabular-nums">{clip.viralityScore.toFixed(1)}</span>
+            <span className="text-white/50 text-[10px] font-medium">/10</span>
+          </span>
+          {hasMp4 && (
+            <span className="rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white">
+              MP4
+            </span>
+          )}
         </div>
-        <div className={cn("flex items-center gap-1 font-semibold", scoreColor)}>
-          <Flame className="h-4 w-4" />
-          <span className="text-lg leading-none tabular-nums">
-            {clip.viralityScore}
+
+        {/* Timestamp */}
+        <div className="pointer-events-none absolute right-3 top-3">
+          <span className="rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[11px] font-mono text-white">
+            {duration}s
           </span>
         </div>
-      </div>
 
-      <h3 className="mt-4 text-lg font-semibold tracking-tight">
-        {clip.title}
-      </h3>
+        {/* Orientation toggle (only when no MP4 baked yet) */}
+        {!hasMp4 && (
+          <div className="absolute bottom-3 left-3">
+            <button
+              type="button"
+              onClick={() => setVertical((v) => !v)}
+              className="grid h-8 w-8 place-items-center rounded-full bg-black/70 text-white backdrop-blur-md hover:bg-black/90 transition-colors"
+              aria-label={
+                vertical ? "Switch to widescreen" : "Switch to vertical"
+              }
+            >
+              {vertical ? (
+                <Monitor className="h-3.5 w-3.5" />
+              ) : (
+                <Smartphone className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
+        )}
 
-      <div className="mt-3 rounded-lg border border-border bg-foreground/[0.04] p-3">
-        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">
-          Hook
-        </div>
-        <p className="text-sm leading-relaxed">{clip.hook}</p>
-      </div>
-
-      <div className="mt-3 space-y-1.5 text-xs">
-        <div className="flex gap-2">
-          <span className="text-muted-foreground w-14 shrink-0">Caption</span>
-          <span>{clip.caption}</span>
-        </div>
-        <div className="flex gap-2">
-          <span className="text-muted-foreground w-14 shrink-0">Why</span>
-          <span className="text-muted-foreground">{clip.reason}</span>
-        </div>
-        <div className="flex gap-2 items-center">
-          <span className="text-muted-foreground w-14 shrink-0">Trigger</span>
-          <Badge variant="primary" className="text-[10px]">
-            <Sparkle className="h-2.5 w-2.5 mr-1" />
-            {TRIGGER_LABEL[clip.emotionalTrigger]}
-          </Badge>
-        </div>
-      </div>
-
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="secondary" onClick={copyHook}>
-          {copied ? (
-            <>
-              <Check className="h-3.5 w-3.5" /> Copied
-            </>
-          ) : (
-            <>
-              <Copy className="h-3.5 w-3.5" /> Copy hook
-            </>
-          )}
-        </Button>
-        <a href={watchUrl} target="_blank" rel="noreferrer">
-          <Button size="sm" variant="ghost">
-            <Play className="h-3.5 w-3.5" /> Open at start
-          </Button>
-        </a>
-        <div className="relative ml-auto">
-          <Button size="sm" onClick={() => setOpenMenu((o) => !o)}>
-            <Download className="h-3.5 w-3.5" /> Export
-          </Button>
+        {/* Export menu — bottom right of the video */}
+        <div className="absolute bottom-3 right-3">
+          <button
+            type="button"
+            onClick={() => setOpenMenu((o) => !o)}
+            className="grid h-8 w-8 place-items-center rounded-full bg-black/70 text-white backdrop-blur-md hover:bg-[color:var(--color-primary)] transition-colors"
+            aria-label="Export this clip"
+            title="Export"
+          >
+            <Download className="h-3.5 w-3.5" />
+          </button>
           {openMenu && (
             <>
               <div
                 className="fixed inset-0 z-30"
                 onClick={() => setOpenMenu(false)}
               />
-              <div className="absolute right-0 top-full mt-2 z-40 w-48 rounded-xl border border-border bg-background p-1 shadow-xl">
+              <div className="absolute right-0 bottom-full mb-2 z-40 w-44 rounded-xl border border-border bg-background p-1 shadow-xl">
+                {hasMp4 && (
+                  <a
+                    href={rendered!.url}
+                    download={`clip-${index + 1}.mp4`}
+                    className="block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-foreground/5"
+                  >
+                    Download MP4
+                  </a>
+                )}
+                {!hasMp4 && (
+                  <a
+                    href={watchUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-foreground/5"
+                  >
+                    Open on YouTube
+                  </a>
+                )}
+                <div className="my-1 h-px bg-border" />
                 {EXPORT_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
@@ -177,6 +225,16 @@ export function ClipCard({
             </>
           )}
         </div>
+      </div>
+
+      {/* Minimal footer — just the title + timestamp */}
+      <div className="px-4 py-3 flex items-center gap-3">
+        <h3 className="text-sm font-semibold tracking-tight flex-1 line-clamp-1">
+          {clip.title}
+        </h3>
+        <span className="text-[11px] font-mono text-muted-foreground tabular-nums shrink-0">
+          {formatTimestamp(start)}–{formatTimestamp(end)}
+        </span>
       </div>
     </Card>
   );

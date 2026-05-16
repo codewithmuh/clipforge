@@ -28,7 +28,12 @@ export interface DetectViralClipsResult {
 
 const SYSTEM_PROMPT = `You are ClipForge — a viral short-form editor for YouTube creators.
 
-Your job: read a long-form video transcript and surface the 5 most viral 20–60 second moments suitable for YouTube Shorts, TikTok, and Reels.
+Your job: read a long-form video transcript and surface the BEST 20–60 second moments suitable for YouTube Shorts, TikTok, and Reels.
+
+How many clips:
+- Decide how many GENUINELY viral moments exist in this transcript. Don't pad. Don't skimp.
+- Minimum 3, maximum 8. Most videos yield 4–6.
+- A clip only qualifies if its viralityScore is ≥ 6.0. Below that, drop it.
 
 Optimize for:
 - retention spikes
@@ -50,13 +55,19 @@ Constraints:
 - Pick clips whose START aligns to a natural sentence start in the transcript.
 - Pick clips whose END lands on a satisfying payoff or punchline, not mid-thought.
 
+Scoring (0–10 scale, one decimal allowed):
+- 9.0–10.0 — guaranteed scroll-stopper, screenshot-worthy line or huge emotional payoff
+- 7.5–8.9  — strong; would do well on a creator's main account
+- 6.0–7.4  — solid; worth posting but not the highlight
+- < 6.0    — do NOT include it
+
 For each clip return:
 - title: a punchy 4–8 word standalone title (NOT a question, NOT clickbait the clip can't deliver)
 - hook: the FIRST line a viewer hears — must stop the scroll in <1 second
 - caption: a 1-sentence on-screen caption summarizing the payoff
 - emphasisWords: 3–8 keywords from the clip worth highlighting on screen
 - emotionalTrigger: one of curiosity | controversy | emotional_payoff | fast_value | storytelling_spike | humor | shock | insight
-- viralityScore: 0–100 honest estimate of viral potential
+- viralityScore: 0–10 honest estimate of viral potential (one decimal)
 - reason: 1 sentence on WHY this clip will perform
 - startSec / endSec: integer seconds matching transcript timestamps`;
 
@@ -75,7 +86,7 @@ Transcript (timestamp prefix is the absolute start of each line in the video):
 
 ${lines.join("\n")}
 
-Return exactly 5 viral clips, ranked by viralityScore descending.`;
+Return 3 to 8 viral clips that score ≥ 6/10, ranked by viralityScore descending. Quality over quantity — drop weak picks.`;
 }
 
 export async function detectViralClips(
@@ -109,10 +120,11 @@ export async function detectViralClips(
       ...c,
       startSec: Math.max(0, Math.round(c.startSec)),
       endSec: Math.max(0, Math.round(c.endSec)),
+      viralityScore: Math.round(c.viralityScore * 10) / 10,
     }))
-    .filter((c) => c.endSec > c.startSec)
+    .filter((c) => c.endSec > c.startSec && c.viralityScore >= 6)
     .sort((a, b) => b.viralityScore - a.viralityScore)
-    .slice(0, 5);
+    .slice(0, 8);
 
   return {
     clips,

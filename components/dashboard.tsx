@@ -5,26 +5,35 @@ import { useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  Clapperboard,
   Download,
+  Link2,
   Loader2,
-  Settings as SettingsIcon,
+  Monitor,
+  ShieldCheck,
+  Smartphone,
   Sparkles,
   Wand2,
+  Zap,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { SettingsPanel } from "@/components/settings-panel";
-import { ClipCard } from "@/components/clip-card";
+import { ClipSlider } from "@/components/clip-slider";
+import { LiveDemo } from "@/components/live-demo";
+import { HowItWorks } from "@/components/how-it-works";
+import { BuiltOn } from "@/components/built-on";
+import { FeatureRows } from "@/components/feature-rows";
+import { SelfHost } from "@/components/self-host";
+import { FAQ } from "@/components/faq";
+import { BottomCta } from "@/components/bottom-cta";
 import {
   extractYouTubeId,
   type TranscriptSegment,
   type VideoMetadata,
 } from "@/lib/youtube-shared";
 import type { ViralClip } from "@/lib/types";
-import { useSettings } from "@/lib/store";
 import { exportClips, type ExportFormat } from "@/lib/exporters";
 import { cn, formatDuration, formatTimestamp } from "@/lib/utils";
 
@@ -41,6 +50,23 @@ interface ClipsResponse {
   clips: ViralClip[];
 }
 
+export interface RenderedClip {
+  id: string;
+  clipIndex: number;
+  url: string;
+  durationSec: number;
+  width: number;
+  height: number;
+  bytes: number;
+  layout: "vertical" | "widescreen";
+}
+
+interface RenderResponse {
+  generationId: string;
+  layout: "vertical" | "widescreen";
+  clips: RenderedClip[];
+}
+
 const BULK_EXPORTS: { label: string; value: ExportFormat }[] = [
   { label: "All clips → CapCut JSON", value: "capcut" },
   { label: "All clips → Premiere XML", value: "premiere" },
@@ -54,12 +80,10 @@ export function Dashboard() {
   const search = useSearchParams();
   const initialV = search.get("v") ?? "";
   const [url, setUrl] = useState(initialV);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
-
-  const provider = useSettings((s) => s.provider);
-  const apiKey = useSettings((s) => s.apiKeyFor(s.provider));
-  const setProvider = useSettings((s) => s.setProvider);
+  const [renderLayout, setRenderLayout] = useState<"vertical" | "widescreen">(
+    "vertical",
+  );
 
   const transcriptMutation = useMutation({
     mutationFn: async (input: string): Promise<TranscriptResponse> => {
@@ -85,12 +109,45 @@ export function Dashboard() {
           submissionId: t.submissionId,
           metadata: t.metadata,
           transcript: t.transcript,
-          provider,
-          apiKey: apiKey || undefined,
+          provider: "anthropic",
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "AI clip detection failed.");
+      return data;
+    },
+    onSuccess: () => {
+      renderMutation.reset();
+    },
+  });
+
+  const renderMutation = useMutation({
+    mutationFn: async (): Promise<RenderResponse> => {
+      const t = transcriptMutation.data;
+      const c = clipsMutation.data;
+      if (!t || !c) throw new Error("Load a transcript and clips first.");
+      const res = await fetch("/api/render", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          submissionId: t.submissionId,
+          generationId: c.generationId,
+          layout: renderLayout,
+          clips: c.clips.map((clip) => ({
+            title: clip.title,
+            startSec: clip.startSec,
+            endSec: clip.endSec,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(
+          data.detail
+            ? `${data.error} — ${data.detail}`
+            : (data.error ?? "Render failed."),
+        );
+      }
       return data;
     },
   });
@@ -159,57 +216,117 @@ export function Dashboard() {
   }
 
   const canRunClips = Boolean(transcript) && !clipsMutation.isPending;
-  const missingKey = !apiKey;
+  const isEmpty = !transcript && !transcriptMutation.isPending;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-12">
-      <SettingsPanel
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
-
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Paste a YouTube URL, then turn it into 5 viral shorts.
-          </p>
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 sm:pt-6 pb-12">
+      <div
+        className={cn(
+          "flex flex-col items-center text-center transition-all",
+          isEmpty ? "pt-4 sm:pt-6 pb-4" : "pt-2 pb-6",
+        )}
+      >
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-foreground/[0.04] px-3 py-1 text-[10px] sm:text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--color-primary)] animate-pulse" />
+          MIT licensed · BYOK · Free forever
         </div>
-        <Button variant="secondary" onClick={() => setSettingsOpen(true)}>
-          <SettingsIcon className="h-4 w-4" />
-          <span className="hidden sm:inline">Settings</span>
-        </Button>
+        {isEmpty ? (
+          <h1 className="mt-4 text-[2.25rem] sm:text-6xl font-semibold tracking-[-0.025em] leading-[0.95] text-balance">
+            1 long video,{" "}
+            <span className="bg-gradient-to-br from-foreground via-foreground to-[color:var(--color-primary)] bg-clip-text text-transparent">
+              8 viral clips.
+            </span>{" "}
+            Free. Forever.
+          </h1>
+        ) : (
+          <h1 className="mt-5 text-2xl sm:text-4xl font-semibold tracking-tight text-balance">
+            <span className="bg-gradient-to-br from-foreground via-foreground to-[color:var(--color-primary)] bg-clip-text text-transparent">
+              Ready when you are.
+            </span>
+          </h1>
+        )}
+        <p
+          className={cn(
+            "mt-3 max-w-xl text-sm text-muted-foreground text-balance",
+            !isEmpty && "sm:text-sm",
+          )}
+        >
+          {isEmpty
+            ? "Paste any YouTube link. AI ranks the moments /10, renders real 9:16 MP4s, ready for Shorts, TikTok and Reels."
+            : "Loaded. Now find the moments and render the cuts."}
+        </p>
+
+        <form
+          onSubmit={onLoad}
+          className={cn(
+            "relative mt-5 w-full max-w-2xl",
+            !isEmpty && "mt-5 sm:mt-5",
+          )}
+        >
+          <div className="flex items-center gap-2 rounded-full border border-border bg-foreground/[0.04] p-1.5 pl-5 shadow-[0_0_0_1px_rgba(124,92,255,0.0)] focus-within:shadow-[0_0_0_1px_rgba(124,92,255,0.4),0_8px_40px_-8px_rgba(124,92,255,0.35)] transition-shadow">
+            <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="Paste a YouTube link…"
+              spellCheck={false}
+              className="flex-1 bg-transparent outline-none text-sm sm:text-base placeholder:text-muted-foreground"
+            />
+            <Button
+              type="submit"
+              size="lg"
+              className="rounded-full shrink-0"
+              disabled={transcriptMutation.isPending || !url.trim()}
+            >
+              {transcriptMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="hidden sm:inline">Loading</span>
+                </>
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4" />
+                  Get clips
+                </>
+              )}
+            </Button>
+          </div>
+          {transcriptMutation.isError && (
+            <p className="mt-3 text-sm text-red-500 dark:text-red-300 text-left">
+              {(transcriptMutation.error as Error).message}
+            </p>
+          )}
+        </form>
+
+        {isEmpty && (
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              No watermark
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5" />
+              ~30s per video
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" />
+              Claude or Gemini
+            </span>
+          </div>
+        )}
       </div>
 
-      <Card className="p-4 sm:p-5">
-        <form onSubmit={onLoad} className="flex flex-col sm:flex-row gap-2">
-          <Input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://www.youtube.com/watch?v=…"
-            className="flex-1"
-            spellCheck={false}
-          />
-          <Button
-            type="submit"
-            disabled={transcriptMutation.isPending || !url.trim()}
-            className="sm:w-44"
-          >
-            {transcriptMutation.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading
-              </>
-            ) : (
-              <>Load video</>
-            )}
-          </Button>
-        </form>
-        {transcriptMutation.isError && (
-          <ErrorRow message={(transcriptMutation.error as Error).message} />
-        )}
-      </Card>
+      {isEmpty && (
+        <>
+          <LiveDemo />
+          <BuiltOn />
+          <FeatureRows />
+          <HowItWorks />
+          <SelfHost />
+          <FAQ />
+          <BottomCta />
+        </>
+      )}
 
       {transcript && (
         <Card className="mt-4 p-4 sm:p-5 animate-fade-up">
@@ -246,7 +363,7 @@ export function Dashboard() {
                 <Button
                   size="lg"
                   onClick={() => clipsMutation.mutate()}
-                  disabled={!canRunClips || missingKey}
+                  disabled={!canRunClips}
                 >
                   {clipsMutation.isPending ? (
                     <>
@@ -261,32 +378,9 @@ export function Dashboard() {
                 </Button>
                 <Badge variant="primary">
                   <Sparkles className="h-3 w-3 mr-1" />
-                  {provider === "anthropic" ? "Claude" : "Gemini"}
+                  Claude · Sonnet 4.6
                 </Badge>
-                <button
-                  className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-                  onClick={() =>
-                    setProvider(provider === "anthropic" ? "google" : "anthropic")
-                  }
-                  type="button"
-                >
-                  switch
-                </button>
               </div>
-              {missingKey && (
-                <p className="mt-3 text-xs text-amber-600 dark:text-amber-300 flex items-center gap-1.5">
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  Add your{" "}
-                  {provider === "anthropic" ? "Anthropic" : "Gemini"} key in{" "}
-                  <button
-                    onClick={() => setSettingsOpen(true)}
-                    className="underline"
-                  >
-                    Settings
-                  </button>{" "}
-                  to run AI analysis.
-                </p>
-              )}
             </div>
           </div>
         </Card>
@@ -299,7 +393,7 @@ export function Dashboard() {
       )}
 
       {clipsMutation.isPending && (
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <SkeletonClip key={i} delayMs={i * 80} />
           ))}
@@ -311,10 +405,28 @@ export function Dashboard() {
           <div className="mt-10 mb-4 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg sm:text-xl font-semibold">
-                {clipsResult.clips.length} viral moments
+                {clipsResult.clips.length} viral moment
+                {clipsResult.clips.length === 1 ? "" : "s"} found
               </h2>
               <p className="text-xs text-muted-foreground mt-1">
-                Analyzed by {clipsResult.model} in{" "}
+                Best {Math.max(...clipsResult.clips.map((c) => c.viralityScore)).toFixed(1)}
+                /10
+                {" · "}
+                avg{" "}
+                {(
+                  clipsResult.clips.reduce(
+                    (sum, c) => sum + c.viralityScore,
+                    0,
+                  ) / clipsResult.clips.length
+                ).toFixed(1)}
+                /10 · total runtime{" "}
+                {formatDuration(
+                  clipsResult.clips.reduce(
+                    (sum, c) => sum + (c.endSec - c.startSec),
+                    0,
+                  ),
+                )}
+                {" · "}analyzed by {clipsResult.model} in{" "}
                 {(clipsResult.latencyMs / 1000).toFixed(1)}s
               </p>
             </div>
@@ -347,17 +459,121 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {clipsResult.clips.map((clip, i) => (
-              <ClipCard
-                key={i}
-                clip={clip}
-                index={i}
-                metadata={transcript!.metadata}
-                onExport={logExport}
+          <ClipSlider
+            clips={clipsResult.clips}
+            metadata={transcript!.metadata}
+            rendered={renderMutation.data?.clips}
+            onExport={logExport}
+          />
+
+          <Card className="mt-8 mb-4 p-4 sm:p-5">
+            <h3 className="text-sm font-semibold mb-3">Ranked moments</h3>
+            <ol className="space-y-1.5">
+              {clipsResult.clips.map((clip, i) => (
+                <li
+                  key={i}
+                  className="flex items-center gap-3 text-sm rounded-lg px-2 py-1.5 hover:bg-foreground/[0.03] transition-colors"
+                >
+                  <span className="font-mono text-xs text-muted-foreground w-5">
+                    #{i + 1}
+                  </span>
+                  <span
+                    className={cn(
+                      "font-semibold tabular-nums w-12",
+                      clip.viralityScore >= 8.5
+                        ? "text-[color:var(--color-primary)]"
+                        : clip.viralityScore >= 7
+                          ? "text-amber-600 dark:text-amber-300"
+                          : "text-foreground/70",
+                    )}
+                  >
+                    {clip.viralityScore.toFixed(1)}
+                    <span className="text-muted-foreground text-[10px] ml-0.5">
+                      /10
+                    </span>
+                  </span>
+                  <span className="font-mono text-[11px] text-muted-foreground w-32">
+                    {formatTimestamp(clip.startSec)} → {formatTimestamp(clip.endSec)}
+                    <span className="ml-1 text-muted-foreground/60">
+                      ({Math.round(clip.endSec - clip.startSec)}s)
+                    </span>
+                  </span>
+                  <span className="truncate flex-1">{clip.title}</span>
+                </li>
+              ))}
+            </ol>
+          </Card>
+
+          <Card className="mt-2 mb-4 p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Clapperboard className="h-4 w-4 text-[color:var(--color-primary)]" />
+                  Render real MP4 clips
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Downloads the source video, cuts each clip with ffmpeg,
+                  and reframes for vertical Shorts. Takes ~30–90s.
+                </p>
+              </div>
+              <div className="inline-flex rounded-xl border border-border bg-foreground/5 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setRenderLayout("vertical")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                    renderLayout === "vertical"
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Smartphone className="h-3.5 w-3.5" /> 9:16
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRenderLayout("widescreen")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                    renderLayout === "widescreen"
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Monitor className="h-3.5 w-3.5" /> 16:9
+                </button>
+              </div>
+              <Button
+                onClick={() => renderMutation.mutate()}
+                disabled={renderMutation.isPending}
+              >
+                {renderMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Rendering…
+                  </>
+                ) : (
+                  <>
+                    <Clapperboard className="h-4 w-4" />
+                    {renderMutation.data ? "Re-render" : "Render clips"}
+                  </>
+                )}
+              </Button>
+            </div>
+            {renderMutation.isError && (
+              <ErrorRow
+                message={(renderMutation.error as Error).message}
               />
-            ))}
-          </div>
+            )}
+            {renderMutation.data && !renderMutation.isPending && (
+              <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-300">
+                ✓ {renderMutation.data.clips.length} MP4
+                {renderMutation.data.clips.length === 1 ? "" : "s"} ready —{" "}
+                {renderMutation.data.layout === "vertical" ? "1080×1920" : "16:9"}
+                . Cards now play the real cut.
+              </p>
+            )}
+          </Card>
+
         </>
       )}
 

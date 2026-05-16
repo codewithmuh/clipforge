@@ -2,8 +2,8 @@
 
 # ClipForge
 
-**The open-source OpusClip alternative.**
-Turn long YouTube videos into viral shorts in seconds — powered by your favorite AI model.
+**Open-source AI video clipper.**
+Turn long YouTube videos into viral shorts in seconds — powered by your own AI key.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg?style=flat-square)](./LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org)
@@ -26,7 +26,7 @@ Paste a YouTube URL → ClipForge fetches the transcript, asks an AI to find the
 
 **Bring your own key.** Use Anthropic Claude, Google Gemini, or OpenAI — keys stay in your browser or pass through a secure server proxy you control.
 
-> Built for creators who want OpusClip-level results without the SaaS bill.
+> Built for creators who want viral-clip results without the SaaS bill.
 
 ---
 

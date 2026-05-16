@@ -27,9 +27,8 @@ const BodySchema = z.object({
       }),
     )
     .min(1),
-  provider: z.enum(["anthropic", "google"]),
+  provider: z.enum(["anthropic", "google"]).default("anthropic"),
   model: z.string().optional(),
-  apiKey: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -46,25 +45,24 @@ export async function POST(req: Request) {
     );
   }
 
-  const serverKey =
+  const apiKey = (
     parsed.provider === "anthropic"
       ? process.env.ANTHROPIC_API_KEY
-      : process.env.GEMINI_API_KEY;
-
-  const apiKey = parsed.apiKey?.trim() || serverKey || "";
-  const byok = Boolean(parsed.apiKey?.trim());
+      : process.env.GEMINI_API_KEY
+  )?.trim();
 
   if (!apiKey) {
     return NextResponse.json(
       {
         error:
           parsed.provider === "anthropic"
-            ? "No Anthropic API key provided. Add your key in Settings or set ANTHROPIC_API_KEY on the server."
-            : "No Gemini API key provided. Add your key in Settings or set GEMINI_API_KEY on the server.",
+            ? "ANTHROPIC_API_KEY is not set on the server. Add it to .env and restart `npm run dev`."
+            : "GEMINI_API_KEY is not set on the server. Add it to .env and restart `npm run dev`.",
       },
-      { status: 400 },
+      { status: 500 },
     );
   }
+  const byok = false;
 
   let result;
   try {

@@ -15,7 +15,7 @@ export const ViralClipSchema = z.object({
     "shock",
     "insight",
   ]),
-  viralityScore: z.number().min(0).max(100),
+  viralityScore: z.number().min(0).max(10),
   reason: z.string().min(2).max(280),
   caption: z.string().min(2).max(280),
   emphasisWords: z.array(z.string()).max(20).default([]),
