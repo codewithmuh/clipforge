@@ -17,6 +17,7 @@ Live app (coming soon): [clipforge.codewithmuh.com](https://clipforge.codewithmu
 </div>
 
 ---
+<img width="1721" height="958" alt="Screenshot 2026-05-16 at 9 32 35 PM" src="https://github.com/user-attachments/assets/7e3ca1b4-ecb1-4aab-b3eb-ef4d9500bcec" />
 
 ## What is ClipForge?
 
@@ -29,6 +30,8 @@ Paste a YouTube URL → ClipForge fetches the transcript, asks an AI to find the
 > Built for creators who want viral-clip results without the SaaS bill.
 
 ---
+<img width="1721" height="958" alt="Screenshot 2026-05-16 at 9 32 35 PM" src="https://github.com/user-attachments/assets/74316343-f7bd-4186-81a4-77b4400a8823" />
+<img width="1721" height="958" alt="Screenshot 2026-05-16 at 9 32 35 PM" src="https://github.com/user-attachments/assets/b612cd70-d342-43be-a546-4176f3a41b85" />
 
 ## Why ClipForge
 
