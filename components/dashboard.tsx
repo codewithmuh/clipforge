@@ -127,6 +127,21 @@ export function Dashboard() {
     transcriptMutation.mutate(url);
   }
 
+  function logExport(format: ExportFormat, clipIndex?: number) {
+    const generationId = clipsResult?.generationId;
+    if (!generationId) return;
+    fetch("/api/exports", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        generationId,
+        format,
+        clipIndex: clipIndex ?? null,
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  }
+
   function bulkExport(format: ExportFormat) {
     if (!transcript || !clipsResult) return;
     const payload = exportClips(transcript.metadata, clipsResult.clips, format);
@@ -140,6 +155,7 @@ export function Dashboard() {
     a.remove();
     URL.revokeObjectURL(objectUrl);
     setExportMenuOpen(false);
+    logExport(format);
   }
 
   const canRunClips = Boolean(transcript) && !clipsMutation.isPending;
@@ -338,6 +354,7 @@ export function Dashboard() {
                 clip={clip}
                 index={i}
                 metadata={transcript!.metadata}
+                onExport={logExport}
               />
             ))}
           </div>
@@ -391,7 +408,7 @@ function SkeletonClip({ delayMs }: { delayMs: number }) {
         <div className="h-5 w-10 rounded bg-foreground/5 animate-pulse" />
       </div>
       <div className="mt-4 h-6 w-3/4 rounded bg-foreground/5 animate-pulse" />
-      <div className="mt-3 h-20 rounded-lg bg-white/[0.03] animate-pulse" />
+      <div className="mt-3 h-20 rounded-lg bg-foreground/[0.03] animate-pulse" />
       <div className="mt-3 h-4 w-full rounded bg-foreground/5 animate-pulse" />
       <div className="mt-2 h-4 w-2/3 rounded bg-foreground/5 animate-pulse" />
     </Card>

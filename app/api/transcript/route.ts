@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { extractYouTubeId, fetchTranscript, fetchVideoMetadata } from "@/lib/youtube";
-import { prisma } from "@/lib/db";
-import { clientIpFromHeaders, hashIp } from "@/lib/hash";
+import { BackendError, backendFetch } from "@/lib/backend";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +8,23 @@ export const dynamic = "force-dynamic";
 const BodySchema = z.object({
   url: z.string().min(1),
 });
+
+interface BackendTranscriptResponse {
+  submissionId: number | string;
+  metadata: {
+    id: string;
+    title: string;
+    author: string;
+    thumbnail: string;
+    durationSec: number | null;
+    url: string;
+  };
+  transcript: {
+    text: string;
+    offsetSec: number;
+    durationSec: number;
+  }[];
+}
 
 export async function POST(req: Request) {
   let body: z.infer<typeof BodySchema>;
@@ -22,74 +37,42 @@ export async function POST(req: Request) {
     );
   }
 
-  const id = extractYouTubeId(body.url);
-  if (!id) {
-    return NextResponse.json(
-      { error: "Could not parse a YouTube video ID from that URL." },
-      { status: 400 },
-    );
-  }
+  // Forward X-Forwarded-For so the backend records the original client IP
+  // (hashed) rather than the Next.js server's IP.
+  const forwardedFor =
+    req.headers.get("x-forwarded-for") ??
+    req.headers.get("x-real-ip") ??
+    undefined;
 
-  let metadata;
   try {
-    metadata = await fetchVideoMetadata(id);
-  } catch (err) {
-    return NextResponse.json(
+    const data = await backendFetch<BackendTranscriptResponse>(
+      "/api/clipforge/transcript/",
       {
-        error: "Failed to fetch video metadata. Is the URL public?",
-        detail: err instanceof Error ? err.message : String(err),
+        method: "POST",
+        body: JSON.stringify({ url: body.url }),
+        headers: forwardedFor
+          ? { "x-forwarded-for": forwardedFor }
+          : undefined,
       },
-      { status: 502 },
     );
-  }
-
-  let transcript;
-  try {
-    transcript = await fetchTranscript(id);
-  } catch (err) {
-    return NextResponse.json(
-      {
-        error:
-          "Failed to fetch transcript. This video may not have captions enabled.",
-        detail: err instanceof Error ? err.message : String(err),
-      },
-      { status: 502 },
-    );
-  }
-
-  if (transcript.length === 0) {
-    return NextResponse.json(
-      { error: "Transcript was empty. This video may not have captions." },
-      { status: 422 },
-    );
-  }
-
-  // Best-effort persist to DB; do not fail the request if DB is down (e.g. user
-  // hasn't run `docker compose up -d` yet).
-  let submissionId: string | null = null;
-  try {
-    const ip = clientIpFromHeaders(req.headers);
-    const submission = await prisma.submission.create({
-      data: {
-        youtubeId: id,
-        url: metadata.url,
-        title: metadata.title,
-        channel: metadata.author,
-        thumbnail: metadata.thumbnail,
-        durationSec: metadata.durationSec,
-        language: transcript[0]?.text ? null : null,
-        ipHash: hashIp(ip),
-        userAgent: req.headers.get("user-agent") ?? null,
-      },
+    return NextResponse.json({
+      submissionId: String(data.submissionId),
+      metadata: data.metadata,
+      transcript: data.transcript,
     });
-    submissionId = submission.id;
   } catch (err) {
-    console.warn("[transcript] submission persistence failed:", err);
+    if (err instanceof BackendError) {
+      return NextResponse.json(
+        { error: err.message, detail: err.detail },
+        { status: err.status >= 400 ? err.status : 502 },
+      );
+    }
+    return NextResponse.json(
+      {
+        error: "Unexpected error fetching transcript.",
+        detail: err instanceof Error ? err.message : String(err),
+      },
+      { status: 500 },
+    );
   }
-
-  return NextResponse.json({
-    submissionId,
-    metadata,
-    transcript,
-  });
 }

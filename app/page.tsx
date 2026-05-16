@@ -33,7 +33,7 @@ export default function Page() {
             <h1 className="mt-6 text-4xl sm:text-6xl font-semibold tracking-tight text-balance animate-fade-up [animation-delay:80ms]">
               Turn YouTube videos into
               <br />
-              <span className="bg-gradient-to-br from-white via-white to-[color:var(--color-primary)] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-br from-foreground via-foreground to-[color:var(--color-primary)] bg-clip-text text-transparent">
                 viral shorts in seconds.
               </span>
             </h1>
@@ -156,8 +156,8 @@ function Feature({
   body: string;
 }) {
   return (
-    <Card className="p-6 transition-colors hover:bg-white/[0.05]">
-      <div className="h-9 w-9 rounded-lg bg-white/5 flex items-center justify-center text-[color:var(--color-primary)]">
+    <Card className="p-6 transition-colors hover:bg-foreground/[0.05]">
+      <div className="h-9 w-9 rounded-lg bg-foreground/5 flex items-center justify-center text-[color:var(--color-primary)]">
         {icon}
       </div>
       <h3 className="mt-4 font-semibold">{title}</h3>

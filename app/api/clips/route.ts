@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { detectViralClips } from "@/lib/ai";
-import { prisma } from "@/lib/db";
-import type { TranscriptSegment, VideoMetadata } from "@/lib/youtube";
+import { BackendError, backendFetch } from "@/lib/backend";
+import type { TranscriptSegment, VideoMetadata } from "@/lib/youtube-shared";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -85,24 +85,36 @@ export async function POST(req: Request) {
     );
   }
 
+  // Best-effort log to Django backend. We never block the user on this —
+  // if the backend is down, the creator still gets their clips.
   let generationId: string | null = null;
   if (parsed.submissionId) {
     try {
-      const generation = await prisma.generation.create({
-        data: {
-          submissionId: parsed.submissionId,
-          provider: parsed.provider,
-          model: result.model,
-          byok,
-          promptTokens: result.promptTokens,
-          outputTokens: result.outputTokens,
-          latencyMs: result.latencyMs,
-          clips: result.clips,
+      const logged = await backendFetch<{ generationId: number | string }>(
+        "/api/clipforge/generations/",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            submissionId: Number(parsed.submissionId),
+            provider: parsed.provider,
+            model: result.model,
+            byok,
+            promptTokens: result.promptTokens,
+            outputTokens: result.outputTokens,
+            latencyMs: result.latencyMs,
+            clips: result.clips,
+          }),
         },
-      });
-      generationId = generation.id;
+      );
+      generationId = String(logged.generationId);
     } catch (err) {
-      console.warn("[clips] generation persistence failed:", err);
+      if (err instanceof BackendError) {
+        console.warn(
+          `[clips] generation log skipped (${err.status}): ${err.message}`,
+        );
+      } else {
+        console.warn("[clips] generation log skipped:", err);
+      }
     }
   }
 

@@ -36,11 +36,11 @@ export function SettingsPanel({
       />
       <aside
         className={cn(
-          "fixed right-0 top-0 z-50 h-full w-full sm:w-[420px] bg-[#0b0b10] border-l border-white/10 transition-transform duration-300 flex flex-col",
+          "fixed right-0 top-0 z-50 h-full w-full sm:w-[420px] bg-background border-l border-border transition-transform duration-300 flex flex-col",
           open ? "translate-x-0" : "translate-x-full",
         )}
       >
-        <header className="flex items-center justify-between p-5 border-b border-white/8">
+        <header className="flex items-center justify-between p-5 border-b border-border">
           <div className="flex items-center gap-2">
             <KeyRound className="h-4 w-4 text-[color:var(--color-primary)]" />
             <h2 className="font-semibold">Settings</h2>
@@ -161,7 +161,7 @@ export function SettingsPanel({
           </section>
         </div>
 
-        <footer className="p-5 border-t border-white/8">
+        <footer className="p-5 border-t border-border">
           <Button onClick={onClose} className="w-full">
             Done
           </Button>
@@ -189,7 +189,7 @@ function ProviderBtn({
         "rounded-xl border p-3 text-left transition-colors",
         active
           ? "border-[color:var(--color-primary)] bg-[color:var(--color-primary)]/10"
-          : "border-white/10 bg-white/[0.02] hover:bg-white/[0.05]",
+          : "border-border bg-foreground/[0.02] hover:bg-foreground/[0.05]",
       )}
     >
       <div className="text-sm font-semibold">{title}</div>
