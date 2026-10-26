@@ -5,16 +5,30 @@
 **Open-source AI video clipper.**
 Turn long YouTube videos into viral shorts in seconds — powered by your own AI key.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-black.svg?style=flat-square)](./LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-22c55e?style=flat-square)](./CONTRIBUTING.md)
-[![Stars](https://img.shields.io/github/stars/codewithmuh/clipforge?style=flat-square&color=f59e0b)](https://github.com/codewithmuh/clipforge/stargazers)
+<p align="center">
+  <a href="https://github.com/codewithmuh/clipforge/releases"><img src="https://img.shields.io/github/v/release/codewithmuh/clipforge?color=blue&label=version&style=flat-square" alt="GitHub Release"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="License: MIT"></a>
+  <a href="https://github.com/codewithmuh/clipforge/stargazers"><img src="https://img.shields.io/github/stars/codewithmuh/clipforge?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/codewithmuh/clipforge/network/members"><img src="https://img.shields.io/github/forks/codewithmuh/clipforge?style=flat-square" alt="Forks"></a>
+  <a href="https://youtube.com/@codewithmuh"><img src="https://img.shields.io/badge/YouTube-%40codewithmuh-FF0000?style=flat-square&logo=youtube&logoColor=white" alt="YouTube"></a>
+  <br>
+  <img src="https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js&logoColor=white" alt="Next.js 16">
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Tailwind-4-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind 4">
+  <img src="https://img.shields.io/badge/AI%20Engines-Claude%20%7C%20Gemini%20%7C%20OpenAI-blue?style=flat-square" alt="BYOK AI">
+</p>
 
 Live app (coming soon): [clipforge.codewithmuh.com](https://clipforge.codewithmuh.com) · [Report bug](https://github.com/codewithmuh/clipforge/issues/new?template=bug_report.yml) · [Request feature](https://github.com/codewithmuh/clipforge/issues/new?template=feature_request.yml) · [Discussions](https://github.com/codewithmuh/clipforge/discussions)
 
 </div>
+
+```mermaid
+flowchart LR
+    A["YouTube URL<br/>(Video + Metadata)"] --> B["Transcript Fetch<br/>& Word Timestamps"]
+    B --> C["AI Scoring Engine<br/>(Claude / Gemini / OpenAI)"]
+    C --> D["Top 5 Viral Clips<br/>(Hooks + Curated Moments)"]
+    D --> E["Multi-Format Export<br/>(CapCut · Premiere · SRT · VTT)"]
+```
 
 ---
 <img width="1721" height="958" alt="Screenshot 2026-05-16 at 9 32 35 PM" src="https://github.com/user-attachments/assets/7e3ca1b4-ecb1-4aab-b3eb-ef4d9500bcec" />
