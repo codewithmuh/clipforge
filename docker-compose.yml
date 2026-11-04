@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: clipforge
-      POSTGRES_PASSWORD: clipforge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clipforge}
       POSTGRES_DB: clipforge
     ports:
       - "5433:5432"
